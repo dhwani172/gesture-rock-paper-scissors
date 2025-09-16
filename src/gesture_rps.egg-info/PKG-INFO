@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: gesture-rps
+Version: 0.1.0
+Summary: Gesture-controlled Rock–Paper–Scissors (local, VS Code)
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: opencv-python
+Requires-Dist: mediapipe
+Requires-Dist: numpy
+Requires-Dist: pyyaml
+Requires-Dist: loguru

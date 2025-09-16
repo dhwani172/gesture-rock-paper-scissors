@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+outputs/
+dataset/
+samples/
+src/gesture_rps/trains/images/
+src/gesture_rps/trains/landmarks/
+*.npz
+*.npy
+*.log
+*.pyc

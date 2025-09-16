@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gesture-rps"
+version = "0.1.0"
+description = "Gesture-controlled Rock–Paper–Scissors (local, VS Code)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "opencv-python",
+    "mediapipe",
+    "numpy",
+    "pyyaml",
+    "loguru",
+    "fastapi",
+    "uvicorn[standard]",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+select = ["E","F","I"]

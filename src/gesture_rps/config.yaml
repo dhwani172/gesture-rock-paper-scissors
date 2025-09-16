@@ -1,0 +1,112 @@
+video:
+  width: 720
+  height: 560
+  fps_target: 20
+  process_scale: 0.8   # scale frames before MediaPipe to speed up (0.5..1.0)
+capture:
+  window_ms: 450
+  burst_frames: 11
+  min_final_still_ms: 150
+thresholds:
+  gesture_conf: 0.60
+  min_landmarks: 15
+  min_brightness: 40    
+  max_motion_last: 12.0   
+  # Additional gesture robustness thresholds
+  ext_y_margin: 0.015          # how much tip.y must be above pip.y to count as extended
+  min_scissor_gap_norm: 0.20   # min normalized gap between index and middle tips (looser)
+  max_thumb_gap_for_rock_norm: 0.33  # if thumb is far from index MCP, do not treat as rock (thumbs-up)
+  paper_min_extended: 4        # require 4 non-thumb fingers for paper (harder dataset)
+  paper_min_extended_loose: 3  # fallback: accept 3 extended if spread is wide
+  paper_spread_min: 0.38       # normalized index-pinky tip distance for loose paper
+  ext_score_margin: 0.04       # distance-based extension margin (wrist->tip vs wrist->pip)
+  min_scissor_gap_both_extended: 0.30  # if ring+pinky also look extended, require larger V-gap for scissors
+  scissor_fallback_gap_norm: 0.16      # if both index+middle extended and gap >= this, accept scissors at lower conf
+ai:
+  policy: "adaptive_freq"
+  history: 40
+mediapipe:
+  model_complexity: 0   # 0=faster, 1=default quality
+  max_num_hands: 1      # process only one hand for speed
+  detect_stride: 2      # run overlay detection every N frames (>=1)
+fairness:
+  lock_at_count: 2
+logging:
+  out_dir: "outputs"
+  save_last_clip: false
+ui:
+  show_guides: true
+  show_locked_icon: true
+  show_scoreboard: true
+  ui:
+  show_guides: true
+  show_locked_icon: true
+  show_scoreboard: true
+  font_path: 'C:\Users\sanja\gesture-rps\assets\ui\fonts\DreamOrphans.otf'   # relative to this file
+  use_ttf: true
+  result_anim_secs: 1.6
+  active_theme: "neon"
+  themes:
+    neon:
+      panel_bg: [30, 30, 30]
+      text:     [255, 255, 255]
+      accent:   [0, 200, 255]
+      win:      [30, 180, 30]
+      lose:     [30, 30, 200]
+      tie:      [120, 120, 120]
+    retro:
+      panel_bg: [20, 20, 20]
+      text:     [255, 240, 200]
+      accent:   [255, 180, 0]
+      win:      [0, 200, 140]
+      lose:     [220, 60, 60]
+      tie:      [180, 180, 180]
+    mono:
+      panel_bg: [24, 24, 24]
+      text:     [235, 235, 235]
+      accent:   [180, 180, 180]
+      win:      [220, 220, 220]
+      lose:     [160, 160, 160]
+      tie:      [120, 120, 120]
+
+  morph_digits: true
+  bloom:
+    enabled: true
+    threshold: 220
+    intensity: 0.55
+    blur_ksize: 17
+
+  visuals:
+    gradient_backdrop: true
+    vignette: true
+    glass_panels: true
+    glow_trail: true
+    result_spotlight: true
+
+  gradient:
+    color_a: [10, 20, 60]
+    color_b: [60, 20, 100]
+    alpha: 0.25
+    speed: 0.08
+
+  vignette:
+    strength: 0.45
+    softness: 0.35
+
+  glass:
+    blur_ksize: 11
+    alpha: 0.70
+    radius: 16
+    border_alpha: 0.35
+
+  glow_trail:
+    max_len: 28
+    base_thickness: 3
+    max_thickness: 9
+    base_alpha: 0.12
+    speed_gain: 0.85
+
+  spotlight:
+    duration: 1.1
+    width: 0.55
+    intensity: 0.35

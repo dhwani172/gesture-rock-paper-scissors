@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+src/gesture_rps/__init__.py
+src/gesture_rps/ai_policy.py
+src/gesture_rps/game_logic.py
+src/gesture_rps/gesture_detector.py
+src/gesture_rps/main.py
+src/gesture_rps/ui_overlay.py
+src/gesture_rps.egg-info/PKG-INFO
+src/gesture_rps.egg-info/SOURCES.txt
+src/gesture_rps.egg-info/dependency_links.txt
+src/gesture_rps.egg-info/requires.txt
+src/gesture_rps.egg-info/top_level.txt
+src/utils/__init__.py
+src/utils/timing.py
+tests/test_rules.py

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gesture RPS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"
+    integrity="sha512-8m8BqgG4W2nG6Kp2mE5cWbJ6uZV6mV4t3Gm9kC7pQXb9H1r1sR2wz0i1QyH7hP2u9qKc9JmJ3iI7r6C4D0/2Qw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+  <body>
+    <div class="bg-gradient"></div>
+    <nav class="nav">
+      <div class="brand">Gesture <span>Rock Paper Scissors</span></div>
+      <ul class="nav__links">
+        <li><a href="#stage" id="linkGame">Game</a></li>
+        <li><a href="#" id="linkHow">How it works</a></li>
+      </ul>
+      <button class="btn ghost" id="subscribeBtn">Subscribe</button>
+    </nav>
+
+    <main class="page">
+    <div class="container float-in" id="stage">
+      <header class="hero compact">
+        <h1 class="logo">Gesture <span>RPS</span></h1>
+        <div class="actions">
+          <label class="select-wrap" title="Choose difficulty">
+            <span class="label">Difficulty</span>
+            <select id="difficulty" class="select">
+              <option value="random">Random</option>
+              <option value="adaptive_freq" selected>Adaptive</option>
+              <option value="markov">Markov</option>
+            </select>
+          </label>
+          <button id="startBtn" class="btn primary" title="Space to start">
+            <span class="btn__glow"></span>
+            <span class="btn__label">Start Round</span>
+          </button>
+          <span id="status" class="status"></span>
+        </div>
+      </header>
+
+      <div class="stage-layout">
+        <section class="stage card">
+          <video id="cam" autoplay playsinline></video>
+          <canvas id="snap"></canvas>
+          <div id="countdown" class="countdown"></div>
+        </section>
+
+        <aside class="score card side">
+          <div class="score-grid">
+            <div class="metric"><span class="k">Rounds</span><span class="v" id="rounds">0</span></div>
+            <div class="metric"><span class="k">Wins</span><span class="v win" id="wins">0</span></div>
+            <div class="metric"><span class="k">Losses</span><span class="v lose" id="losses">0</span></div>
+            <div class="metric"><span class="k">Ties</span><span class="v tie" id="ties">0</span></div>
+          </div>
+          <div class="last">
+            <span>Last:</span>
+            <span>You <strong id="playerMove">-</strong></span>
+            <span>vs AI <strong id="aiMove">-</strong></span>
+            <span class="arrow">→</span>
+            <strong id="result">-</strong>
+          </div>
+        </aside>
+      </div>
+    </div>
+    </main>
+
+    <!-- How it works modal -->
+    <div class="modal" id="howModal" aria-hidden="true" role="dialog" aria-labelledby="howTitle">
+      <div class="modal__backdrop" data-close="modal"></div>
+      <div class="modal__card" role="document">
+        <button class="modal__close" aria-label="Close" data-close="modal">×</button>
+        <h2 id="howTitle">How it works</h2>
+        <ol class="modal__list">
+          <li>Allow camera access. Seat yourself with good lighting.</li>
+          <li>Click <b>Start Round</b> or press <b>Space</b>. You’ll see a quick countdown.</li>
+          <li>At “Shoot!”, show one clear hand gesture: <b>Rock</b> (fist), <b>Paper</b> (open hand), or <b>Scissors</b> (index+middle).</li>
+          <li>The server analyzes a short burst of frames, picks an AI move, and shows <b>Win/Lose/Tie</b>.</li>
+          <li>Results update the scoreboard. Change difficulty anytime from the dropdown.</li>
+        </ol>
+        <p class="modal__hint">Tip: Keep your hand within the frame, avoid fast motion, and use decent lighting for best results.</p>
+      </div>
+    </div>
+
+  <script src="/static/app.js"></script>
+</body>
+
+</html>

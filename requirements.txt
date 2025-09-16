@@ -1,0 +1,10 @@
+opencv-python
+mediapipe
+numpy
+pyyaml
+loguru
+pytest
+ruff
+black
+fastapi
+uvicorn[standard]
