@@ -4,10 +4,10 @@ streamlit-webrtc==0.63.4
 
 # Realtime media stack (pin to wheel-friendly)
 aiortc==1.13.0
-av==14.4.0
+av==12.0.0
 
 # Computer vision (HEADLESS build to avoid GUI/GL deps)
-opencv-python-headless==4.9.0.80
+opencv-python-headless==4.8.1.78
 mediapipe==0.10.20
 
 # Utilities
