@@ -1,13 +1,17 @@
-streamlit
-streamlit-webrtc
-opencv-python
-mediapipe
-numpy
-pillow
-pyyaml
-loguru
-pytest
-ruff
-black
-fastapi
-uvicorn[standard]
+# core app
+streamlit==1.49.1
+streamlit-webrtc==0.63.4
+
+# realtime media deps (pulled by streamlit-webrtc, pinned to wheel-friendly versions)
+aiortc==1.13.0
+av==14.4.0
+
+# cv stack (headless avoids GUI/GTK issues on servers)
+opencv-python-headless==4.10.0.84
+mediapipe==0.10.21
+
+# utilities
+numpy==1.26.4
+pillow>=10.0.0
+pyyaml>=6.0.1
+loguru>=0.7.2
