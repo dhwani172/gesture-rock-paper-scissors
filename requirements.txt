@@ -1,6 +1,9 @@
+streamlit
+streamlit-webrtc
 opencv-python
 mediapipe
 numpy
+pillow
 pyyaml
 loguru
 pytest
