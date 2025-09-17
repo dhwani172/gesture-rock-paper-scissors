@@ -1,0 +1,7 @@
+gradio>=4.0
+opencv-python
+mediapipe
+numpy
+pillow
+pyyaml
+loguru
