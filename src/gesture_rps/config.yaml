@@ -34,79 +34,16 @@ fairness:
 logging:
   out_dir: "outputs"
   save_last_clip: false
+
 ui:
-  show_guides: true
-  show_locked_icon: true
-  show_scoreboard: true
-  ui:
-  show_guides: true
-  show_locked_icon: true
-  show_scoreboard: true
-  font_path: 'C:\Users\sanja\gesture-rps\assets\ui\fonts\DreamOrphans.otf'   # relative to this file
-  use_ttf: true
-  result_anim_secs: 1.6
-  active_theme: "neon"
-  themes:
-    neon:
-      panel_bg: [30, 30, 30]
-      text:     [255, 255, 255]
-      accent:   [0, 200, 255]
-      win:      [30, 180, 30]
-      lose:     [30, 30, 200]
-      tie:      [120, 120, 120]
-    retro:
-      panel_bg: [20, 20, 20]
-      text:     [255, 240, 200]
-      accent:   [255, 180, 0]
-      win:      [0, 200, 140]
-      lose:     [220, 60, 60]
-      tie:      [180, 180, 180]
-    mono:
-      panel_bg: [24, 24, 24]
-      text:     [235, 235, 235]
-      accent:   [180, 180, 180]
-      win:      [220, 220, 220]
-      lose:     [160, 160, 160]
-      tie:      [120, 120, 120]
-
-  morph_digits: true
-  bloom:
-    enabled: true
-    threshold: 220
-    intensity: 0.55
-    blur_ksize: 17
-
+  use_ttf_small: false
+  effects:
+    confetti_on_win: false
+    shake_on_lose:  false
+    countdown_ring: false
   visuals:
-    gradient_backdrop: true
-    vignette: true
-    glass_panels: true
-    glow_trail: true
-    result_spotlight: true
-
-  gradient:
-    color_a: [10, 20, 60]
-    color_b: [60, 20, 100]
-    alpha: 0.25
-    speed: 0.08
-
-  vignette:
-    strength: 0.45
-    softness: 0.35
-
-  glass:
-    blur_ksize: 11
-    alpha: 0.70
-    radius: 16
-    border_alpha: 0.35
-
-  glow_trail:
-    max_len: 28
-    base_thickness: 3
-    max_thickness: 9
-    base_alpha: 0.12
-    speed_gain: 0.85
-
-  spotlight:
-    duration: 1.1
-    width: 0.55
-    intensity: 0.35
+    gradient_backdrop: false
+    vignette: false
+    glass_panels: false
+    glow_trail: false
+    result_spotlight: false
