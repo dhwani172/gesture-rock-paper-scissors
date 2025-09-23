@@ -1,3 +1,8 @@
+import sys
+import os
+# Make "src/" importable on Streamlit Cloud and locally
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+
 import av
 import cv2
 import time
@@ -8,26 +13,101 @@ from pathlib import Path
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Page + CSS
+# Page setup + CSS injection
 # ──────────────────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Gesture RPS", layout="wide")
 
-def local_css(file_name: str):
-    try:
-        with open(file_name, "r", encoding="utf-8") as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    except Exception:
-        pass
+def inject_css(path_str: str):
+    p = Path(path_str)
+    if p.exists():
+        st.markdown(p.read_text(encoding="utf-8"), unsafe_allow_html=True)
 
-css_path = Path("src/gesture_rps/web/static/styles.css")
-if css_path.exists():
-    local_css(css_path)
+def inject_theme(theme: str):
+    """Inject CSS vars for light/dark theme at runtime."""
+    if theme == "dark":
+        st.markdown(
+            """
+<style>
+:root {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --muted: #95a1b2;
+  --accent: #58a6ff;
+  --accent-2: #7ee787;
+  --accent-warm: #c297ff;
 
+  --card: rgba(255,255,255,0.06);
+  --border: rgba(240,246,252,0.12);
+  --shadow: 0 16px 40px rgba(0,0,0,.45);
+
+  --glass: rgba(255,255,255,.06);
+  --glass-border: rgba(255,255,255,.12);
+}
+</style>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        # Light defaults (your palette)
+        st.markdown(
+            """
+<style>
+:root {
+  --bg: #ffffff;
+  --fg: #3B6255;
+  --muted: #8BA49A;
+  --accent: #3B6255;
+  --accent-2: #D2C49E;
+  --accent-warm: #739882;
+
+  --card: rgba(255, 255, 255, 0.92);
+  --border: rgba(59, 98, 85, 0.18);
+  --shadow: 0 10px 30px rgba(59, 98, 85, 0.12);
+
+  --glass: rgba(255,255,255,.72);
+  --glass-border: rgba(59,98,85,.18);
+}
+</style>
+            """,
+            unsafe_allow_html=True,
+        )
+
+# Base CSS (animations, polish, glass)
+inject_css("src/gesture_rps/web/static/styles.css")
+
+# OpenCV perf hints
 cv2.setUseOptimized(True)
 try:
     cv2.setNumThreads(2)
 except Exception:
     pass
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Sidebar: Theme switcher + Tips
+# ──────────────────────────────────────────────────────────────────────────────
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+
+with st.sidebar:
+    st.selectbox(
+        "Theme",
+        ["light", "dark"],
+        key="theme",
+        help="Switch between light and dark themes.",
+    )
+inject_theme(st.session_state.theme)
+
+with st.sidebar.expander("📘 Tips", True):
+    st.markdown(
+        """
+        ### How to Play
+        - Allow webcam access.  
+        - Keep one hand in view.  
+        - On countdown end, show ✊, ✋, or ✌.  
+        - AI locks its move near the last second.  
+        - Results and score update after each round.  
+        """
+    )
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Landing screen
@@ -40,10 +120,10 @@ if not st.session_state.started:
         """
         <div class="container page float-in">
           <div class="hero">
-            <h1 class="logo"><span>Gesture RPS</span></h1>
+            <h1 class="logo shimmer"><span>Gesture RPS</span></h1>
             <div class="status">Webcam gesture game</div>
           </div>
-          <div class="card" style="padding:22px;text-align:center;">
+          <div class="card glass raise appear" style="padding:22px;text-align:center;">
             <p style="margin:0 0 14px 0;color:var(--muted)">
               Play Rock–Paper–Scissors with your hand gestures.
             </p>
@@ -60,7 +140,7 @@ if not st.session_state.started:
     st.stop()
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Imports + config
+# Imports from your package + config
 # ──────────────────────────────────────────────────────────────────────────────
 from src.gesture_rps.gesture_detector import GestureDetector
 from src.gesture_rps.ui_overlay import draw_hand_skeleton
@@ -126,7 +206,7 @@ with right:
     title, desc = info[difficulty]
     st.markdown(
         f"""
-        <div class="card raise appear" style="padding:18px">
+        <div class="card glass raise appear" style="padding:18px">
           <h4 style="margin:.25rem 0">{title}</h4>
           <div style="opacity:.9">{desc}</div>
         </div>
@@ -151,7 +231,8 @@ class RPSVideoTransformer(VideoTransformerBase):
 
     def _detect(self, bgr):
         if self.downscale != 1.0:
-            small = cv2.resize(bgr, None, fx=self.downscale, fy=self.downscale, interpolation=cv2.INTER_AREA)
+            small = cv2.resize(bgr, None, fx=self.downscale, fy=self.downscale,
+                               interpolation=cv2.INTER_AREA)
             scale = 1.0 / self.downscale
         else:
             small = bgr
@@ -169,7 +250,7 @@ class RPSVideoTransformer(VideoTransformerBase):
         orig = frame.to_ndarray(format="bgr24")
         h, w = orig.shape[:2]
 
-        img = np.zeros((h, w, 3), dtype=np.uint8)
+        img = np.zeros((h, w, 3), dtype=np.uint8)  # black canvas (no face)
         now = time.perf_counter()
 
         if self.frame_idx % self.stride == 0:
@@ -250,19 +331,23 @@ with left:
         for n in [3, 2, 1]:
             status_box.markdown(
                 f"""
-                <div class="card appear" style="padding:14px">
+                <div class="card glass appear pulse-once" style="padding:14px">
                   <div class="label">Countdown</div>
                   <div style="font-size:28px;font-weight:800">{n}</div>
                 </div>
-                """, unsafe_allow_html=True)
+                """,
+                unsafe_allow_html=True,
+            )
             time.sleep(1)
         status_box.markdown(
             """
-            <div class="card appear" style="padding:14px">
+            <div class="card glass appear" style="padding:14px">
               <div class="label">Countdown</div>
               <div style="font-size:24px;font-weight:700">Shoot!</div>
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
 
         t0 = time.time()
         while time.time() - t0 < 2.0 and gs["phase"] != "result":
@@ -272,7 +357,7 @@ with left:
             color = {"win": "v win", "lose": "v lose", "tie": "v tie"}.get(gs["show_result"], "v")
             status_box.markdown(
                 f"""
-                <div class="card appear" style="padding:14px">
+                <div class="card glass appear" style="padding:14px">
                   <div class="label">Result</div>
                   <div class="{color}" style="font-size:26px">
                     {gs["show_result"].upper()}
@@ -286,24 +371,10 @@ with left:
             )
 
     # Scoreboard
-    st.markdown('<div class="scoreboard card appear" style="padding:14px">', unsafe_allow_html=True)
+    st.markdown('<div class="scoreboard card glass appear" style="padding:14px">', unsafe_allow_html=True)
     c1, c2, c3, c4 = st.columns(4)
     c1.markdown(f"<div class='metric'><div class='k'>Wins</div><div class='v win'>{gs['wins']}</div></div>", unsafe_allow_html=True)
     c2.markdown(f"<div class='metric'><div class='k'>Losses</div><div class='v lose'>{gs['losses']}</div></div>", unsafe_allow_html=True)
     c3.markdown(f"<div class='metric'><div class='k'>Ties</div><div class='v tie'>{gs['ties']}</div></div>", unsafe_allow_html=True)
     c4.markdown(f"<div class='metric'><div class='k'>Last</div><div class='v'>{gs['show_result']}</div></div>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Sidebar tips – with How to Play
-# ──────────────────────────────────────────────────────────────────────────────
-with st.sidebar.expander("📘 Tips", True):
-    st.markdown(
-        """
-        ### How to Play
-        - Allow webcam access.  
-        - Keep one hand in view.  
-        - On countdown end, show ✊, ✋, or ✌.  
-        - AI locks its move near the last second.  
-        - Results and score update after each round.  
-        """)
