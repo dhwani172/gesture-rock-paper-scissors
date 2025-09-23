@@ -1,13 +1,8 @@
-streamlit==1.49.1
-streamlit-webrtc==0.63.4
-
-# Core deps
+streamlit==1.39.0
+streamlit-webrtc==0.47.7
 opencv-python-headless==4.10.0.84
 mediapipe==0.10.21
 numpy==1.26.4
 PyYAML==6.0.2
-
-# WebRTC stack
-av==14.4.0
-aiortc==1.13.0
-aioice==0.8.0
+av==10.0.0
+aiortc==1.6.0
