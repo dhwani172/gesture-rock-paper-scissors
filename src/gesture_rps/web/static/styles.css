@@ -1,5 +1,5 @@
 :root {
-  /* Pastel palette */
+  /* Light theme defaults; dark is injected at runtime */
   --bg: #ffffff;
   --fg: #3B6255;
   --muted: #8BA49A;
@@ -11,12 +11,15 @@
   --border: rgba(59, 98, 85, 0.18);
   --shadow: 0 10px 30px rgba(59, 98, 85, 0.12);
 
+  /* Glassmorphism helpers */
+  --glass: rgba(255, 255, 255, .72);
+  --glass-border: rgba(59, 98, 85, .18);
+
   /* Motion & elevation */
-  --elev-1: 0 6px 18px rgba(59, 98, 85, .10);
-  --elev-2: 0 10px 30px rgba(59, 98, 85, .16);
+  --elev-1: 0 6px 18px rgba(0, 0, 0, .10);
+  --elev-2: 0 14px 36px rgba(0, 0, 0, .16);
   --radius: 16px;
   --bezier: cubic-bezier(.2, .8, .2, 1);
-  /* material-ish */
 }
 
 /* Base */
@@ -34,7 +37,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Streamlit container */
 .stApp {
   background: var(--bg);
   color: var(--fg);
@@ -80,70 +82,69 @@ body {
   background: linear-gradient(120deg, transparent 45%, rgba(255, 255, 255, .28) 50%, transparent 55%);
   transform: translateX(-60%);
   animation: shimmer 1.6s var(--bezier) infinite;
-  pointer-events: none;
   opacity: .6;
+  pointer-events: none;
 }
 
 /* Keyframes */
 @keyframes floatIn {
   from {
     transform: translateY(8px);
-    opacity: 0;
+    opacity: 0
   }
 
   to {
     transform: none;
-    opacity: 1;
+    opacity: 1
   }
 }
 
 @keyframes fadeIn {
   from {
-    opacity: 0;
+    opacity: 0
   }
 
   to {
-    opacity: 1;
+    opacity: 1
   }
 }
 
 @keyframes slideUp {
   from {
     transform: translateY(6px);
-    opacity: 0;
+    opacity: 0
   }
 
   to {
     transform: none;
-    opacity: 1;
+    opacity: 1
   }
 }
 
 @keyframes pulseOnce {
   from {
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0)
   }
 
   to {
-    box-shadow: 0 0 0 12px rgba(0, 0, 0, 0);
+    box-shadow: 0 0 0 12px rgba(0, 0, 0, 0)
   }
 }
 
 @keyframes shimmer {
   0% {
-    transform: translateX(-60%);
+    transform: translateX(-60%)
   }
 
   100% {
-    transform: translateX(60%);
+    transform: translateX(60%)
   }
 }
 
-/* Respect users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
-    transition: none !important;
+    transition: none !important
   }
 }
 
@@ -172,13 +173,22 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  transition: transform 200ms var(--bezier), box-shadow 220ms var(--bezier), border-color 220ms var(--bezier), background 220ms var(--bezier);
+  transition: transform 200ms var(--bezier), box-shadow 220ms var(--bezier),
+    border-color 220ms var(--bezier), background 220ms var(--bezier);
 }
 
 .card:hover {
   transform: translateY(-2px);
   box-shadow: var(--elev-2);
   border-color: rgba(59, 98, 85, .26);
+}
+
+/* Glassmorphism flavor */
+.glass {
+  background: var(--glass) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border) !important;
 }
 
 /* Scoreboard grouping */
@@ -258,7 +268,8 @@ body {
   padding: 10px 14px;
   font-weight: 700;
   box-shadow: var(--shadow);
-  transition: transform 160ms var(--bezier), box-shadow 160ms var(--bezier), filter 160ms var(--bezier), background 200ms var(--bezier);
+  transition: transform 160ms var(--bezier), box-shadow 160ms var(--bezier),
+    filter 160ms var(--bezier), background 200ms var(--bezier);
 }
 
 .stButton>button:hover,
@@ -278,10 +289,8 @@ body {
   box-shadow: 0 0 0 3px rgba(203, 222, 211, .85);
 }
 
-/* Selects (Streamlit + generic) */
-.stSelectbox div[data-baseweb="select"]>div,
-.select,
-.stSelectbox .st-bx {
+/* Selects */
+.stSelectbox div[data-baseweb="select"]>div {
   border-radius: 10px;
   transition: box-shadow 160ms var(--bezier), transform 160ms var(--bezier), border-color 160ms var(--bezier);
 }
@@ -299,7 +308,7 @@ body {
 .webrtc iframe,
 .webrtc video {
   border-radius: var(--radius) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .12) !important;
   background: #000;
   object-fit: cover;
   transition: transform 200ms var(--bezier), box-shadow 200ms var(--bezier), filter 220ms var(--bezier);
@@ -308,7 +317,7 @@ body {
 .webrtc iframe:hover,
 .webrtc video:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.14) !important;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .18) !important;
   filter: brightness(1.02);
 }
 
@@ -335,7 +344,7 @@ video::-webkit-media-controls {
   box-shadow: var(--elev-1);
 }
 
-/* Utility: subtle appearance when content updates dynamically */
+/* Utility */
 .appear {
   animation: fadeIn 260ms var(--bezier) both;
 }
@@ -349,7 +358,7 @@ video::-webkit-media-controls {
   box-shadow: var(--elev-2);
 }
 
-/* Status card highlight states (use as class on your status_box wrapper if desired) */
+/* Optional status highlight helpers */
 .status--win {
   box-shadow: 0 0 0 2px rgba(44, 122, 85, .18), var(--shadow);
 }
@@ -360,54 +369,4 @@ video::-webkit-media-controls {
 
 .status--tie {
   box-shadow: 0 0 0 2px rgba(94, 126, 115, .18), var(--shadow);
-}
-
-/* Subtle entrance animation (used by some elements) */
-@keyframes pop {
-  from {
-    transform: scale(.98);
-    opacity: 0;
-  }
-
-  to {
-    transform: none;
-    opacity: 1;
-  }
-}
-
-/* Subtle polish for Streamlit modal */
-[data-testid="stModal"]>div {
-  border-radius: 16px !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: var(--shadow) !important;
-}
-
-[data-testid="stModal"] h1,
-[data-testid="stModal"] h2,
-[data-testid="stModal"] h3 {
-  color: var(--fg) !important;
-}
-
-/* Modal (custom, works on older Streamlit) */
-.modal__backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(2px);
-  z-index: 9998;
-}
-
-.modal__card {
-  position: fixed;
-  z-index: 9999;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(720px, calc(100% - 32px));
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 18px;
-  animation: fadeIn 220ms var(--bezier) both;
 }

@@ -2,35 +2,55 @@ video:
   width: 720
   height: 560
   fps_target: 20
-  process_scale: 0.8   # scale frames before MediaPipe to speed up (0.5..1.0)
+  process_scale: 0.8        # 0.5..1.0 (downscales input before MediaPipe)
+
 capture:
   window_ms: 450
   burst_frames: 11
   min_final_still_ms: 150
+
 thresholds:
+  # Core guards
   gesture_conf: 0.60
   min_landmarks: 15
-  min_brightness: 40    
-  max_motion_last: 12.0   
-  # Additional gesture robustness thresholds
-  ext_y_margin: 0.015          # how much tip.y must be above pip.y to count as extended
-  min_scissor_gap_norm: 0.20   # min normalized gap between index and middle tips (looser)
-  max_thumb_gap_for_rock_norm: 0.33  # if thumb is far from index MCP, do not treat as rock (thumbs-up)
-  paper_min_extended: 4        # require 4 non-thumb fingers for paper (harder dataset)
-  paper_min_extended_loose: 3  # fallback: accept 3 extended if spread is wide
-  paper_spread_min: 0.38       # normalized index-pinky tip distance for loose paper
-  ext_score_margin: 0.04       # distance-based extension margin (wrist->tip vs wrist->pip)
-  min_scissor_gap_both_extended: 0.30  # if ring+pinky also look extended, require larger V-gap for scissors
-  scissor_fallback_gap_norm: 0.16      # if both index+middle extended and gap >= this, accept scissors at lower conf
+  min_brightness: 40
+  max_motion_last: 12.0
+
+  # Extension detection
+  ext_y_margin: 0.015              # tip must be at least this above PIP (Y)
+  ext_score_margin: 0.06           # strong extension score (stricter)
+  ext_score_loose_norm: 0.018      # slight extension score (used for relaxed rock)
+
+  # Scissors
+  min_scissor_gap_norm: 0.20       # normalized index↔middle tip gap for scissors
+  scissor_fallback_gap_norm: 0.16  # fallback acceptance for near-scissors
+
+  # Paper (strict)
+  paper_min_extended: 4            # legacy (not used by v2 but ok to keep)
+  paper_min_extended_loose: 3      # legacy (not used by v2 but ok to keep)
+  paper_spread_min: 0.38           # legacy (not used by v2 but ok to keep)
+  paper_spread_min_strict: 0.52    # index↔pinky min spread
+  paper_min_adj_gap_norm: 0.20     # min gap for (idx-mid, mid-ring, ring-pinky)
+  min_thumb_gap_for_paper_norm: 0.24
+
+  # Rock (more forgiving but safe)
+  max_thumb_gap_for_rock_norm: 0.33        # old strict guard
+  max_thumb_gap_for_rock_loose_norm: 0.40  # allow slightly open thumb
+  rock_max_avg_adj_gap_norm: 0.20          # average (idx-mid, mid-ring, ring-pinky)
+  rock_max_index_pinky_spread_norm: 0.47   # overall spread cap for rock
+
 ai:
   policy: "adaptive_freq"
   history: 40
+
 mediapipe:
-  model_complexity: 0   # 0=faster, 1=default quality
-  max_num_hands: 1      # process only one hand for speed
-  detect_stride: 2      # run overlay detection every N frames (>=1)
+  model_complexity: 0      # 0=faster, 1=higher quality
+  max_num_hands: 1
+  detect_stride: 2         # overlay detection every N frames
+
 fairness:
   lock_at_count: 2
+
 logging:
   out_dir: "outputs"
   save_last_clip: false
