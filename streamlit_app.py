@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────────────────────
-# Path + page config (must be first Streamlit call)
+# Path setup + page config (must be first Streamlit command)
 # ──────────────────────────────────────────────────────────────────────────────
 import sys
 from pathlib import Path
@@ -7,15 +7,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 if SRC.exists():
-    sys.path.insert(0, str(SRC))
+    sys.path.insert(0, str(SRC))  # so "gesture_rps" works both locally & on Cloud
 
 import streamlit as st  # noqa: E402
 
 st.set_page_config(
     page_title="Gesture RPS",
+    page_icon="✌",
     layout="wide",
     initial_sidebar_state="expanded",
-    page_icon="✌",
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ import numpy as np  # noqa: E402
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode  # noqa: E402
 
 # ──────────────────────────────────────────────────────────────────────────────
-# CSS (force light colors so Cloud dark theme doesn’t invert things)
+# CSS (force a light base so Cloud themes don’t invert)
 # ──────────────────────────────────────────────────────────────────────────────
 def local_css(file_name: str):
     try:
@@ -90,16 +90,18 @@ if not st.session_state.started:
     st.stop()
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Local package imports + config
+# Local package imports + config (try both import styles)
 # ──────────────────────────────────────────────────────────────────────────────
-from src.gesture_rps.gesture_detector import GestureDetector  # noqa: E402
-from src.gesture_rps.ui_overlay import draw_hand_skeleton  # noqa: E402
-from src.gesture_rps.game_logic import adjudicate  # noqa: E402
-from src.gesture_rps.ai_policy import (  # noqa: E402
-    RandomPolicy,
-    AdaptiveFrequencyPolicy,
-    MarkovPolicy,
-)
+try:
+    from gesture_rps.gesture_detector import GestureDetector  # noqa: E402
+    from gesture_rps.ui_overlay import draw_hand_skeleton  # noqa: E402
+    from gesture_rps.game_logic import adjudicate  # noqa: E402
+    from gesture_rps.ai_policy import RandomPolicy, AdaptiveFrequencyPolicy, MarkovPolicy  # noqa: E402
+except Exception:
+    from src.gesture_rps.gesture_detector import GestureDetector  # noqa: E402
+    from src.gesture_rps.ui_overlay import draw_hand_skeleton  # noqa: E402
+    from src.gesture_rps.game_logic import adjudicate  # noqa: E402
+    from src.gesture_rps.ai_policy import RandomPolicy, AdaptiveFrequencyPolicy, MarkovPolicy  # noqa: E402
 
 with open("src/gesture_rps/config.yaml", "r", encoding="utf-8") as f:
     CFG = yaml.safe_load(f)
@@ -136,7 +138,76 @@ if "game_state" not in st.session_state:
 gs = st.session_state.game_state
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Layout
+# Sidebar: connection presets + tips
+# ──────────────────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.subheader("Connection")
+    preset = st.selectbox(
+        "Webcam preset",
+        ["Minimal (most compatible)", "Balanced (720p)", "HD (may fail on Cloud)"],
+        index=0,
+        help="If the camera won't start, try 'Minimal'.",
+    )
+    st.caption("If your network blocks P2P, TURN helps. We use public OpenRelay TURN.")
+
+with st.sidebar.expander("📘 Tips", True):
+    st.markdown(
+        """
+        ### How to Play
+        - Allow webcam access (browser prompt).  
+        - Keep one hand in view.  
+        - On countdown end, show ✊, ✋, or ✌.  
+        - AI locks its move near the last second.  
+        - Results and score update after each round.  
+        """
+    )
+
+# Build constraints from preset
+if preset.startswith("Minimal"):
+    MEDIA_CONSTRAINTS = {"video": True, "audio": False}
+elif preset.startswith("Balanced"):
+    MEDIA_CONSTRAINTS = {
+        "video": {
+            "width": {"ideal": 1280},
+            "height": {"ideal": 720},
+            "frameRate": {"ideal": 24, "max": 30},
+            "facingMode": "user",
+        },
+        "audio": False,
+    }
+else:  # HD
+    MEDIA_CONSTRAINTS = {
+        "video": {
+            "width": {"ideal": 1920},
+            "height": {"ideal": 1080},
+            "frameRate": {"ideal": 30, "max": 30},
+            "facingMode": "user",
+        },
+        "audio": False,
+    }
+
+# Robust ICE configuration: Google STUN + OpenRelay TURN
+RTC_CONFIG = {
+    "iceServers": [
+        {"urls": [
+            "stun:stun.l.google.com:19302",
+            "stun:stun1.l.google.com:19302",
+            "stun:stun2.l.google.com:19302",
+        ]},
+        {
+            "urls": [
+                "turn:openrelay.metered.ca:80",
+                "turn:openrelay.metered.ca:443",
+                "turns:openrelay.metered.ca:443?transport=tcp",
+            ],
+            "username": "openrelayproject",
+            "credential": "openrelayproject",
+        },
+    ]
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Layout (main)
 # ──────────────────────────────────────────────────────────────────────────────
 left, right = st.columns([3, 2], gap="large")
 
@@ -244,17 +315,15 @@ class RPSVideoTransformer(VideoTransformerBase):
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Player (left) — **minimal constraints** + **public STUN** for Cloud
+# Player + Start Round + Connection status
 # ──────────────────────────────────────────────────────────────────────────────
 with left:
-    webrtc_streamer(
+    webrtc_ctx = webrtc_streamer(
         key="gesture-rps",
         mode=WebRtcMode.SENDRECV,
         video_transformer_factory=RPSVideoTransformer,
-        media_stream_constraints={"video": True, "audio": False},  # simpler = more compatible
-        rtc_configuration={  # helps establish the P2P connection on Streamlit Cloud
-            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-        },
+        media_stream_constraints=MEDIA_CONSTRAINTS,    # preset-based
+        rtc_configuration=RTC_CONFIG,                  # STUN + TURN
         async_processing=True,
         video_html_attrs={
             "autoPlay": True,
@@ -269,7 +338,10 @@ with left:
         },
     )
 
-    if st.button("Start Round", use_container_width=True):
+    # Show WebRTC state to help diagnose
+    st.caption(f"WebRTC status: {'playing' if (webrtc_ctx and webrtc_ctx.state.playing) else 'not started'}")
+
+    if st.button("Start Round", use_container_width=True, disabled=not (webrtc_ctx and webrtc_ctx.state.playing)):
         gs.update({
             "phase": "countdown",
             "countdown_end": time.perf_counter() + 3.0,
@@ -317,7 +389,7 @@ with left:
             )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Scoreboard (right, below difficulty)
+# Scoreboard (right, under difficulty)
 # ──────────────────────────────────────────────────────────────────────────────
 with right:
     st.markdown('<div class="scoreboard card appear" style="padding:14px;margin-top:12px;">', unsafe_allow_html=True)
@@ -327,18 +399,3 @@ with right:
     c3.markdown(f"<div class='metric'><div class='k'>Ties</div><div class='v tie'>{gs['ties']}</div></div>", unsafe_allow_html=True)
     c4.markdown(f"<div class='metric'><div class='k'>Last</div><div class='v'>{gs['show_result']}</div></div>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Sidebar tips
-# ──────────────────────────────────────────────────────────────────────────────
-with st.sidebar.expander("📘 Tips", True):
-    st.markdown(
-        """
-        ### How to Play
-        - Allow webcam access (browser prompt).  
-        - Keep one hand in view.  
-        - On countdown end, show ✊, ✋, or ✌.  
-        - AI locks its move near the last second.  
-        - Results and score update after each round.  
-        """
-    )
