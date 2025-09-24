@@ -6,6 +6,15 @@ import numpy as np
 import streamlit as st
 from pathlib import Path
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+SRC = ROOT / "src"
+if SRC.exists():
+    sys.path.insert(0, str(SRC))
+from src.gesture_rps.gesture_detector import GestureDetector
+from src.gesture_rps.ui_overlay import draw_hand_skeleton
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Page + CSS
