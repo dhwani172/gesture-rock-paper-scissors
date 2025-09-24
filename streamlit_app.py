@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────────────────────
-# Bootstrap: path + page config FIRST (must be the first Streamlit command)
+# Path + page config (must be first Streamlit call)
 # ──────────────────────────────────────────────────────────────────────────────
 import sys
 from pathlib import Path
@@ -19,7 +19,7 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Std libs / deps
+# Deps
 # ──────────────────────────────────────────────────────────────────────────────
 import av  # noqa: E402
 import cv2  # noqa: E402
@@ -29,7 +29,7 @@ import numpy as np  # noqa: E402
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode  # noqa: E402
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Light theme CSS + load your stylesheet
+# CSS (force light colors so Cloud dark theme doesn’t invert things)
 # ──────────────────────────────────────────────────────────────────────────────
 def local_css(file_name: str):
     try:
@@ -38,16 +38,11 @@ def local_css(file_name: str):
     except Exception:
         pass
 
-# Force light colors so Cloud dark theme doesn't invert your UI
 st.markdown(
     """
     <style>
-      :root {
-        --bg: #ffffff !important;
-        --fg: #3B6255 !important;
-        --muted: #8BA49A !important;
-      }
-      .stApp { background: var(--bg) !important; color: var(--fg) !important; }
+      :root { --bg:#fff !important; --fg:#3B6255 !important; --muted:#8BA49A !important; }
+      .stApp { background:var(--bg)!important; color:var(--fg)!important; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -57,7 +52,7 @@ css_path = Path("src/gesture_rps/web/static/styles.css")
 if css_path.exists():
     local_css(css_path)
 
-# OpenCV perf hints
+# OpenCV perf tweaks
 cv2.setUseOptimized(True)
 try:
     cv2.setNumThreads(2)
@@ -126,7 +121,7 @@ detector = get_detector(CFG)
 # ──────────────────────────────────────────────────────────────────────────────
 if "game_state" not in st.session_state:
     st.session_state.game_state = {
-        "phase": "idle",           # idle | countdown | result
+        "phase": "idle",
         "countdown_end": 0.0,
         "ai_locked": False,
         "locked_move": None,
@@ -141,7 +136,7 @@ if "game_state" not in st.session_state:
 gs = st.session_state.game_state
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Layout (left: player; right: difficulty + scoreboard)
+# Layout
 # ──────────────────────────────────────────────────────────────────────────────
 left, right = st.columns([3, 2], gap="large")
 
@@ -182,7 +177,7 @@ with left:
 class RPSVideoTransformer(VideoTransformerBase):
     def __init__(self):
         self.policy = policy_map.get(difficulty, RandomPolicy)()
-        self.stride = 3          # run detector every N frames
+        self.stride = 3          # detect every N frames
         self.downscale = 0.4     # detect at 40% size
         self.frame_idx = 0
         self.last_pts = None
@@ -249,21 +244,16 @@ class RPSVideoTransformer(VideoTransformerBase):
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Player (left)
+# Player (left) — **minimal constraints** + **public STUN** for Cloud
 # ──────────────────────────────────────────────────────────────────────────────
 with left:
     webrtc_streamer(
         key="gesture-rps",
         mode=WebRtcMode.SENDRECV,
         video_transformer_factory=RPSVideoTransformer,
-        media_stream_constraints={
-            "video": {
-                "width": {"ideal": 480, "max": 480},
-                "height": {"ideal": 360, "max": 360},
-                "frameRate": {"ideal": 18, "max": 18},
-                "facingMode": "user",
-            },
-            "audio": False,
+        media_stream_constraints={"video": True, "audio": False},  # simpler = more compatible
+        rtc_configuration={  # helps establish the P2P connection on Streamlit Cloud
+            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
         },
         async_processing=True,
         video_html_attrs={
@@ -271,13 +261,14 @@ with left:
             "muted": True,
             "playsinline": True,
             "style": {
-                "width": "100%", "height": "360px",
-                "borderRadius": "16px", "backgroundColor": "#000"
+                "width": "100%",
+                "height": "360px",
+                "borderRadius": "16px",
+                "backgroundColor": "#000"
             },
         },
     )
 
-    # Start Round + status (on left, below player)
     if st.button("Start Round", use_container_width=True):
         gs.update({
             "phase": "countdown",
@@ -326,7 +317,7 @@ with left:
             )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Scoreboard (right, BELOW difficulty card)
+# Scoreboard (right, below difficulty)
 # ──────────────────────────────────────────────────────────────────────────────
 with right:
     st.markdown('<div class="scoreboard card appear" style="padding:14px;margin-top:12px;">', unsafe_allow_html=True)
@@ -344,7 +335,7 @@ with st.sidebar.expander("📘 Tips", True):
     st.markdown(
         """
         ### How to Play
-        - Allow webcam access.  
+        - Allow webcam access (browser prompt).  
         - Keep one hand in view.  
         - On countdown end, show ✊, ✋, or ✌.  
         - AI locks its move near the last second.  
