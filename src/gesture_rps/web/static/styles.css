@@ -1,5 +1,15 @@
 :root {
-  /* Light theme defaults; dark is injected at runtime */
+  :root {
+    --bg: #ffffff !important;
+    --fg: #3B6255 !important;
+    --muted: #8BA49A !important;
+  }
+
+  .stApp {
+    background: var(--bg) !important;
+    color: var(--fg) !important;
+  }
+
   --bg: #ffffff;
   --fg: #3B6255;
   --muted: #8BA49A;

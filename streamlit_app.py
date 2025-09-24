@@ -19,6 +19,25 @@ from src.gesture_rps.ui_overlay import draw_hand_skeleton
 # ──────────────────────────────────────────────────────────────────────────────
 # Page + CSS
 # ──────────────────────────────────────────────────────────────────────────────
+st.set_page_config(
+    page_title="Gesture RPS",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    page_icon="✌",
+)
+st.markdown(
+    """
+    <style>
+    /* Force light theme background & text */
+    .stApp {
+        background-color: #ffffff !important;
+        color: #3B6255 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.set_page_config(page_title="Gesture RPS", layout="wide")
 
 def local_css(file_name: str):
