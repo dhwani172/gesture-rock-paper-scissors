@@ -1,11 +1,6 @@
-import av
-import cv2
-import time
-import yaml
-import numpy as np
-import streamlit as st
-from pathlib import Path
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
+# ──────────────────────────────────────────────────────────────────────────────
+# Bootstrap: path + page config FIRST (must be the first Streamlit command)
+# ──────────────────────────────────────────────────────────────────────────────
 import sys
 from pathlib import Path
 
@@ -13,33 +8,29 @@ ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 if SRC.exists():
     sys.path.insert(0, str(SRC))
-from src.gesture_rps.gesture_detector import GestureDetector
-from src.gesture_rps.ui_overlay import draw_hand_skeleton
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Page + CSS
-# ──────────────────────────────────────────────────────────────────────────────
+import streamlit as st  # noqa: E402
+
 st.set_page_config(
     page_title="Gesture RPS",
     layout="wide",
     initial_sidebar_state="expanded",
     page_icon="✌",
 )
-st.markdown(
-    """
-    <style>
-    /* Force light theme background & text */
-    .stApp {
-        background-color: #ffffff !important;
-        color: #3B6255 !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
-st.set_page_config(page_title="Gesture RPS", layout="wide")
+# ──────────────────────────────────────────────────────────────────────────────
+# Std libs / deps
+# ──────────────────────────────────────────────────────────────────────────────
+import av  # noqa: E402
+import cv2  # noqa: E402
+import time  # noqa: E402
+import yaml  # noqa: E402
+import numpy as np  # noqa: E402
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode  # noqa: E402
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Light theme CSS + load your stylesheet
+# ──────────────────────────────────────────────────────────────────────────────
 def local_css(file_name: str):
     try:
         with open(file_name, "r", encoding="utf-8") as f:
@@ -47,10 +38,26 @@ def local_css(file_name: str):
     except Exception:
         pass
 
+# Force light colors so Cloud dark theme doesn't invert your UI
+st.markdown(
+    """
+    <style>
+      :root {
+        --bg: #ffffff !important;
+        --fg: #3B6255 !important;
+        --muted: #8BA49A !important;
+      }
+      .stApp { background: var(--bg) !important; color: var(--fg) !important; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 css_path = Path("src/gesture_rps/web/static/styles.css")
 if css_path.exists():
     local_css(css_path)
 
+# OpenCV perf hints
 cv2.setUseOptimized(True)
 try:
     cv2.setNumThreads(2)
@@ -80,7 +87,7 @@ if not st.session_state.started:
         """,
         unsafe_allow_html=True,
     )
-    c1, c2, c3 = st.columns([1,1,1])
+    c1, c2, c3 = st.columns([1, 1, 1])
     with c2:
         if st.button("Start Game", use_container_width=True):
             st.session_state.started = True
@@ -88,12 +95,16 @@ if not st.session_state.started:
     st.stop()
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Imports + config
+# Local package imports + config
 # ──────────────────────────────────────────────────────────────────────────────
-from src.gesture_rps.gesture_detector import GestureDetector
-from src.gesture_rps.ui_overlay import draw_hand_skeleton
-from src.gesture_rps.game_logic import adjudicate
-from src.gesture_rps.ai_policy import RandomPolicy, AdaptiveFrequencyPolicy, MarkovPolicy
+from src.gesture_rps.gesture_detector import GestureDetector  # noqa: E402
+from src.gesture_rps.ui_overlay import draw_hand_skeleton  # noqa: E402
+from src.gesture_rps.game_logic import adjudicate  # noqa: E402
+from src.gesture_rps.ai_policy import (  # noqa: E402
+    RandomPolicy,
+    AdaptiveFrequencyPolicy,
+    MarkovPolicy,
+)
 
 with open("src/gesture_rps/config.yaml", "r", encoding="utf-8") as f:
     CFG = yaml.safe_load(f)
@@ -130,7 +141,7 @@ if "game_state" not in st.session_state:
 gs = st.session_state.game_state
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Layout
+# Layout (left: player; right: difficulty + scoreboard)
 # ──────────────────────────────────────────────────────────────────────────────
 left, right = st.columns([3, 2], gap="large")
 
@@ -161,16 +172,6 @@ with right:
         """,
         unsafe_allow_html=True,
     )
-
-    # ── Scoreboard moved here: BELOW the difficulty card ──────────────────────
-    st.markdown('<div class="scoreboard card appear" style="padding:14px">', unsafe_allow_html=True)
-    s1, s2, s3, s4 = st.columns(4)
-    s1.markdown(f"<div class='metric'><div class='k'>Wins</div><div class='v win'>{gs['wins']}</div></div>", unsafe_allow_html=True)
-    s2.markdown(f"<div class='metric'><div class='k'>Losses</div><div class='v lose'>{gs['losses']}</div></div>", unsafe_allow_html=True)
-    s3.markdown(f"<div class='metric'><div class='k'>Ties</div><div class='v tie'>{gs['ties']}</div></div>", unsafe_allow_html=True)
-    s4.markdown(f"<div class='metric'><div class='k'>Last</div><div class='v'>{gs['show_result']}</div></div>", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    # ───────────────────────────────────────────────────────────────────────────
 
 with left:
     st.markdown("### Gesture Rock–Paper–Scissors")
@@ -248,7 +249,7 @@ class RPSVideoTransformer(VideoTransformerBase):
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Player + Start Round + Status (left column only now)
+# Player (left)
 # ──────────────────────────────────────────────────────────────────────────────
 with left:
     webrtc_streamer(
@@ -276,6 +277,7 @@ with left:
         },
     )
 
+    # Start Round + status (on left, below player)
     if st.button("Start Round", use_container_width=True):
         gs.update({
             "phase": "countdown",
@@ -324,7 +326,19 @@ with left:
             )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Sidebar tips – with How to Play
+# Scoreboard (right, BELOW difficulty card)
+# ──────────────────────────────────────────────────────────────────────────────
+with right:
+    st.markdown('<div class="scoreboard card appear" style="padding:14px;margin-top:12px;">', unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.markdown(f"<div class='metric'><div class='k'>Wins</div><div class='v win'>{gs['wins']}</div></div>", unsafe_allow_html=True)
+    c2.markdown(f"<div class='metric'><div class='k'>Losses</div><div class='v lose'>{gs['losses']}</div></div>", unsafe_allow_html=True)
+    c3.markdown(f"<div class='metric'><div class='k'>Ties</div><div class='v tie'>{gs['ties']}</div></div>", unsafe_allow_html=True)
+    c4.markdown(f"<div class='metric'><div class='k'>Last</div><div class='v'>{gs['show_result']}</div></div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Sidebar tips
 # ──────────────────────────────────────────────────────────────────────────────
 with st.sidebar.expander("📘 Tips", True):
     st.markdown(
